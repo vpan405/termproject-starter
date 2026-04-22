@@ -17,7 +17,7 @@ from PySide6.QtUiTools import QUiLoader
 
 
 from app.config import SUB_WINDOW_HEIGHT, SUB_WINDOW_WIDTH
-from app.handlers.request_controller import RequestController
+from app.apiservices.request_controller import RequestController
 
 class BusinessDetails(QDialog):
     def __init__(self, api_client, parent=None):

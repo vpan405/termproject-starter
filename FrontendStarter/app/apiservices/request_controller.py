@@ -12,7 +12,7 @@
 
 from PySide6.QtCore import QObject, QThread
 
-from app.handlers.request_handler import RequestHandler
+from app.apiservices.request_handler import RequestHandler
 from app.apiservices import APIClient
 
 

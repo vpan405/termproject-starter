@@ -18,7 +18,7 @@ from PySide6.QtWidgets import QMainWindow
 
 from app.config import WINDOW_TITLE, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT
 from app.apiservices import APIClient
-from app.handlers.request_controller import RequestController
+from app.apiservices.request_controller import RequestController
 from app.ui.business_details import BusinessDetails
 
 
