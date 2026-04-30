@@ -32,10 +32,31 @@ public class YelpRepository {
 
     private Connection connection;
 
-    public List<String> placeHolder1() {
-        List<String> data = new ArrayList<>();
-        logger.info("Placeholder method called.");
-        return data;
+    // returns business state
+    public List<String> getStateData() {
+        List<String> states = new ArrayList<>();
+        logger.info("getStates called in initialize.");
+        String stateQuery = """
+            SELECT DISTINCT state
+            FROM business
+            ORDER BY state
+        """;
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        try (PreparedStatement ps = connection.prepareStatement(stateQuery)) {
+            logger.info("Executing query:" + stateQuery);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                states.add(rs.getString("state"));
+            }
+        } catch (SQLException ex) {
+            logger.severe("Error executing query:" + ex.getMessage());
+            ex.printStackTrace();
+        }
+        return states;
     }
 
     public List<String> placeHolder2(String param) {

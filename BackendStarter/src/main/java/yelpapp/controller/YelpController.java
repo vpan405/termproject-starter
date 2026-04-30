@@ -34,17 +34,17 @@ public class YelpController {
 
     /*
     http://localhost:3000
-    /api/endpoint1
+    /api/states
     */
-    @GetMapping("/endpoint1")
-    public ResponseEntity<?> sampleGetMethod1() {
-        List<String> data;
+    @GetMapping("/states")
+    public ResponseEntity<?> getStates() {
+        List<String> states;
         try {
-            data = yelpRepository.placeHolder1();
+            states = yelpRepository.getStateData();
         } catch (Exception ex) {
             throw new RuntimeException("Could not get the data...", ex);
         }
-        return ResponseEntity.ok(List.of(Map.of("data", data)));
+        return ResponseEntity.ok(List.of(Map.of("states", states)));
     }
 
     /*
