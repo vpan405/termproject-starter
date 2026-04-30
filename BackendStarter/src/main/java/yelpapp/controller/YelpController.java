@@ -35,7 +35,22 @@ public class YelpController {
     /*
     http://localhost:3000
     /api/states
-    */
+
+    example response [
+    {
+        "states": [
+            "AZ",
+            "IL",
+            "NC",
+            "NV",
+            "OH",
+            "PA",
+            "SC",
+            "WI"
+        ]
+    }
+}
+     */
     @GetMapping("/states")
     public ResponseEntity<?> getStates() {
         List<String> states;
