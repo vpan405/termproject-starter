@@ -44,7 +44,21 @@ class BusinessDetails(QDialog):
     
     def on_close_clicked(self):
         self.ui.close()
-    
+
+    def load(self, business_id):
+        self.request_controller.send("GET", f"/api/businesses/{business_id}", self.on_business_fetched, self.on_business_error, None, self.set_status_message)
+
+    def on_business_fetched(self, status_code, body):
+        """Handle successful business details response"""
+        results = json.loads(body)[0]
+        business = results.get("business", {})
+        print(f"Business details fetched successfully: {business}")
+        self.ui.businessName.setText(business.get("business_name",""))
+
+    def on_business_error(self, error_message):
+        """Handle error in fetching business details"""
+        self.parent().show_error(f"Failed to load business details: {error_message}")
+
     # -----------------------------------------------------------
     # HELPER METHODS    
     def set_status_message(self, message):

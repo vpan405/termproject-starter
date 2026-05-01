@@ -14,6 +14,7 @@ package yelpapp.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import yelpapp.model.Business;
 import yelpapp.model.YelpRepository;
 
 import java.util.*;
@@ -35,21 +36,6 @@ public class YelpController {
     /*
     http://localhost:3000
     /api/states
-
-    example response [
-    {
-        "states": [
-            "AZ",
-            "IL",
-            "NC",
-            "NV",
-            "OH",
-            "PA",
-            "SC",
-            "WI"
-        ]
-    }
-}
      */
     @GetMapping("/states")
     public ResponseEntity<?> getStates() {
@@ -64,52 +50,67 @@ public class YelpController {
 
     /*
      http://localhost:3000
-     /api/endpoint2?param=value
+     /api/filters?state=AZ
      */
-    @GetMapping("/endpoint2")
-    public ResponseEntity<?> sampleGetMethod2(@RequestParam String param) {
-        List<String> data;
+    @GetMapping("/filters")
+    public ResponseEntity<?> getFilters(@RequestParam String state) {
+        List<String> categories;
         try {
-            data = yelpRepository.placeHolder2(param);
+            categories = yelpRepository.getCategories(state);
         } catch (Exception ex) {
-            throw new RuntimeException("Could not get the data...", ex);
+            throw new RuntimeException("Could not get the categories for the state and city", ex);
         }
-        return ResponseEntity.ok(List.of(Map.of("data", data)));
+        return ResponseEntity.ok(List.of(Map.of("categories", categories)));
     }
 
     /*
     http://localhost:3000
-    /api/endpoint3
+    /api/businesses
     {
         "key": "value",
         "optionalkeys": ["value1", "value2"]
     }
   */
-    @RequestMapping(value = "/endpoint3", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = "/businesses", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<?> getBusinesses(@RequestBody Map<String, Object> body) {
 
-        List<String> data;
-        List<String> optionalkeys;
-        String key;
+        List<Business> businesses;
+        List<String> categories;
+        String state;
 
 
         // Validate and parse required fields from the request body
         try {
-            key = body.get("key").toString();
+            state = body.get("state").toString();
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Required fields: data.",
+                    "error", "Required fields: state.", // include city too
                     "details", ex.getMessage()
             ));
         }
         // get the optional fields if they exist
-        optionalkeys = (List<String>) body.get("optionalkeys");
+        categories = (List<String>) body.get("categories");
 
         try {
-            data = yelpRepository.placeHolder3(key, optionalkeys);
+            businesses = yelpRepository.queryBusinesses(state, categories);
         } catch (Exception ex) {
             throw new RuntimeException("Search failed...", ex);
         }
-        return ResponseEntity.ok(List.of(Map.of("data", data)));
+        return ResponseEntity.ok(List.of(Map.of("businesses", businesses)));
+    }
+
+    /*
+    http://localhost:3000
+    /api/businesses/{bid}
+     */
+    @GetMapping("/businesses/{bid}")
+    public ResponseEntity<?> getBusinessDetails(@PathVariable String bid){
+        Business businessDetails;
+        try {
+            businessDetails = yelpRepository.getBusinessDetails(bid);
+        } catch (Exception ex) {
+            throw new RuntimeException("Count not find the business for the given business id", ex);
+        }
+        return ResponseEntity.ok(List.of(Map.of("business", businessDetails)));
     }
 }
