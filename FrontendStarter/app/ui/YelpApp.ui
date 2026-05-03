@@ -17,10 +17,10 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>241</width>
-      <height>80</height>
+      <x>20</x>
+      <y>0</y>
+      <width>221</width>
+      <height>131</height>
      </rect>
     </property>
     <property name="font">
@@ -35,9 +35,19 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>40</y>
-       <width>221</width>
-       <height>26</height>
+       <y>30</y>
+       <width>201</width>
+       <height>41</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="citiesList">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>201</width>
+       <height>41</height>
       </rect>
      </property>
     </widget>
@@ -45,10 +55,10 @@
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>100</y>
-      <width>241</width>
-      <height>201</height>
+      <x>20</x>
+      <y>140</y>
+      <width>221</width>
+      <height>241</height>
      </rect>
     </property>
     <property name="font">
@@ -62,10 +72,10 @@
     <widget class="QListView" name="categoryList">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>40</y>
-       <width>221</width>
-       <height>151</height>
+       <x>20</x>
+       <y>30</y>
+       <width>181</width>
+       <height>201</height>
       </rect>
      </property>
     </widget>
@@ -73,9 +83,9 @@
    <widget class="QFrame" name="frame">
     <property name="geometry">
      <rect>
-      <x>270</x>
-      <y>650</y>
-      <width>911</width>
+      <x>250</x>
+      <y>640</y>
+      <width>901</width>
       <height>31</height>
      </rect>
     </property>
@@ -89,48 +99,76 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>0</y>
-       <width>601</width>
-       <height>21</height>
+       <y>10</y>
+       <width>451</width>
+       <height>16</height>
       </rect>
      </property>
      <property name="font">
       <font>
-       <pointsize>11</pointsize>
+       <pointsize>14</pointsize>
       </font>
      </property>
      <property name="text">
-      <string>statusMsg</string>
+      <string>StatusMsg</string>
      </property>
     </widget>
    </widget>
    <widget class="QPushButton" name="searchButton">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>650</y>
-      <width>251</width>
+      <x>20</x>
+      <y>640</y>
+      <width>221</width>
       <height>31</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>13</pointsize>
+      <pointsize>14</pointsize>
      </font>
     </property>
     <property name="text">
-     <string>SEARCH</string>
+     <string>search</string>
     </property>
    </widget>
    <widget class="QTableView" name="businessTable">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>20</y>
-      <width>921</width>
+      <x>250</x>
+      <y>10</y>
+      <width>901</width>
       <height>621</height>
      </rect>
     </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>390</y>
+      <width>221</width>
+      <height>241</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>ATTRIBUTES</string>
+    </property>
+    <widget class="QListView" name="attributeList">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>181</width>
+       <height>201</height>
+      </rect>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -139,7 +177,7 @@
      <x>0</x>
      <y>0</y>
      <width>1281</width>
-     <height>33</height>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuYelpApp">

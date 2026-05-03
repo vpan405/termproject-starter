@@ -16,7 +16,6 @@ from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QAbstractItemView, QMainWindow
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 
-
 from app.config import WINDOW_TITLE, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT
 from app.apiservices import APIClient
 from app.apiservices.request_controller import RequestController
@@ -29,7 +28,7 @@ class YelpApp(QMainWindow):
         self.resize(MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)  # Set window size to match your UI design
         self.setWindowTitle(WINDOW_TITLE)
 
-        # Initialize API client and request controller. 
+        # Initialize API client and request controller.
         # APIClient will be used by both the main window and the business details dialog, so we create it here and pass it down.
         self.api_client = APIClient()
         self.request_controller = RequestController(api_client=self.api_client, parent=self)
@@ -49,26 +48,31 @@ class YelpApp(QMainWindow):
             self.setCentralWidget(self.ui)
 
         # Set up results table model
-        self.headers = ["business_name", "street_address", "city", "star_rating", "num_tips", "latitude", "longitude",  "business_id"]
-        self.headers_pretty = ["Business Name", "Street Address", "City", "Star Rating", "Number of Tips", "Latitude", "Longitude", "Business ID"]
+        self.headers = ["name", "address", "city", "rating", "tip_count", "latitude", "longitude", "b_id"]
+        self.headers_pretty = ["Business Name", "Street Address", "City", "Star Rating", "Number of Tips", "Latitude",
+                               "Longitude", "Business ID"]
 
-        # customize ui elements as needed
+        # customize UI elements as needed
         self.ui.categoryList.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.ui.attributeList.setSelectionMode(QAbstractItemView.MultiSelection)
         self.ui.statusMsg.setText("Ready...")
 
-        # set Models for the category and attribute lists
+        # set models for the category and attribute lists
         self.category_model = QStringListModel()
         self.ui.categoryList.setModel(self.category_model)
+        self.attribute_model = QStringListModel()
+        self.ui.attributeList.setModel(self.attribute_model)
 
-        # set Model for the Business TableView
+        # set models for business Table view
         self.business_model = QStandardItemModel()
         self.ui.businessTable.setModel(self.business_model)
 
         # connect signals to handlers
-        self.ui.statesList.currentIndexChanged.connect(self.on_state_changed)
+        self.ui.statesList.currentIndexChanged.connect(self.on_state_changed_for_city)
+        self.ui.citiesList.currentIndexChanged.connect(self.on_city_changed)
         self.ui.searchButton.clicked.connect(self.on_search_clicked)
 
-        # create the business details dialog once and reuse it
+        # create business details dialog once and reuse it
         self.business_window = BusinessDetails(self.api_client, parent=self)
         self.ui.businessTable.doubleClicked.connect(self.on_business_double_clicked)
 
@@ -85,58 +89,77 @@ class YelpApp(QMainWindow):
         # Only fetch once on first show
         if not hasattr(self, '_initial_load_done'):
             self._initial_load_done = True
-            self.request_controller.send("GET", "/api/states", self.on_states_fetched, self.on_states_error, None, self.set_status_message)
+            self.request_controller.send("GET", "/api/states", self.on_states_fetched, self.on_states_error, None,
+                                         self.set_status_message)
 
     def on_states_fetched(self, status_code, body):
-        """Handle successful status response"""
+        """Handle successful states response"""
         try:
             states = json.loads(body)
-            # populate your state combo box here
-            # assuming the response has a 'states' key with a list of state names
             self.ui.statesList.addItems(states[0]['states'])
             print(f"States loaded: {states}")
+
         except json.JSONDecodeError:
             print(f"Failed to parse states JSON: {body}")
-    
+
     def on_states_error(self, message):
         """Handle states fetch error"""
         print(f"Error fetching states: {message}")
 
-    def on_state_changed(self, index):
-        print("Selected index in STATES combo box:", index)
-        # Fetch categories and attributes from /api/filters enpoint using the selected state and city
-        self.request_controller.send("GET", "/api/filters?state={}".format(self.ui.statesList.currentText()),
-                        self.on_filters_fetched, self.on_filters_error, None, self.set_status_message)
+    def on_state_changed_for_city(self, index):
+        print("Selected index in states combo box", index)
+        self.request_controller.send("GET", "/api/cities?state={}".format(self.ui.statesList.currentText()),
+                                     self.on_cities_fetched, self.on_cities_error, None, self.set_status_message)
 
-    # Handlers for categories
+    def on_city_changed(self, index):
+        print("Selected index in STATES combo box:", index)
+        self.request_controller.send("GET", "/api/filters?state={}&city={}".format(self.ui.statesList.currentText(),
+                                                                                   self.ui.citiesList.currentText()),
+                                     self.on_filters_fetched, self.on_filters_error, None, self.set_status_message)
+
     def on_filters_fetched(self, status_code, body):
         """Handle successful categories response"""
         try:
             filters = json.loads(body)
             # print(filters[0])
-            # populate your category listview here
-            # assuming the response has a 'categories' key with a list of category names
+            # populate cateogry listview
             self.category_model.setStringList(filters[0]['categories'])
-            # print (f"Categories loaded: {filters[0]['categories']}")
-            self.set_status_message("Categories loaded successfully")
+            self.attribute_model.setStringList(filters[1]['attributes'])
+            # print(f"Categories loaded : {filters[0]['categories']}")
+            self.set_status_message("Categories and attributes loaded successfully.")
         except json.JSONDecodeError:
             print(f"Failed to parse categories JSON: {body}")
 
     def on_filters_error(self, message):
-        """Handle attributes fetch error"""
-        print(f"Error fetching attributes: {message}")
+        """Handles attributes fetch error"""
+        print(f"Error fetching attributes {message}")
 
-    # -----------------------------------------------------------
-    # Handlers for business search
+    def on_cities_fetched(self, status_code, body):
+        """Handle successful cities response"""
+        try:
+            cities = json.loads(body)
+            self.ui.citiesList.clear()
+            self.ui.citiesList.addItems(cities[0]['cities'])
+            print(f"Cities loaded: {cities}")
+        except json.JSONDecodeError:
+            print(f"Failed to parse states JSON: {body}")
+
+    def on_cities_error(self, message):
+        """Handle states fetch error"""
+        print(f"Error fetching states: {message}")
+
+    # -------------------------
+    # searching the businesses
     def on_search_clicked(self):
-        # Gather selected filters and send search request to /api/search endpoint
         selected_categories = [cat.data() for cat in self.ui.categoryList.selectedIndexes()]
         search_body = {
             "state": self.ui.statesList.currentText(),
+            "city": self.ui.citiesList.currentText(),
             "categories": selected_categories
         }
         print(f"Search POST request body: {search_body}")
-        self.request_controller.send("POST", "/api/businesses", self.on_search_results, self.on_search_error, search_body)
+        self.request_controller.send("POST", "/api/businesses", self.on_search_results, self.on_search_error,
+                                     search_body)
 
     def on_search_results(self, status_code, body):
         """Handle successful search response"""
@@ -144,50 +167,49 @@ class YelpApp(QMainWindow):
             results = json.loads(body)
             self.update_business_table(results)
         except json.JSONDecodeError:
-            print(f"Failed to parse search results JSON: {body}")
+            print(f"failed to parse search results in json {body}")
 
     def update_business_table(self, search_results):
-        """Update the tablView with business search results"""
         self.business_model.clear()
         if not search_results:
-            self.set_status_message("No results found")
+            self.set_status_message("No results found.")
             return
-        businesses = search_results[0].get('businesses',[])
+        businesses = search_results[0].get("businesses", [])
         self.business_model.setHorizontalHeaderLabels(self.headers_pretty)
-        for row_data in businesses:
-            row = [QStandardItem(str(row_data.get(col,""))) for col in self.headers]
-            self.business_model.appendRow(row)
-        # configure the tableView doesn't work here for some reason
-        self.configure_results_table()
 
-        self.set_status_message(f"Found {len(businesses)} businesses")
+        for row_data in businesses:
+            row = [QStandardItem(str(row_data.get(col, ""))) for col in self.headers]
+            self.business_model.appendRow(row)
+        self.configure_results_table()
+        self.set_status_message(f"Found {len(businesses)} businesses.")
 
     def on_search_error(self, message):
-        """Handle search error"""
+        """Handles search error"""
         self.set_status_message(f"Search failed: {message}")
-        print(f"Error performing search: {message}")
+        print(f"Error fetching attributes {message}")
 
-    # -----------------------------------------------------------
+    # -----------------------------------------------------
+
     def configure_results_table(self):
-        """Configure the tableView"""
-        id_col = self.headers.index("business_id")
-        id_address = self.headers.index("street_address")
-        id_name = self.headers.index("business_name")
+        """configure the table/view"""
+        id_col = self.headers.index("b_id")
+        id_address = self.headers.index("address")
+        id_name = self.headers.index("name")
         self.ui.businessTable.resizeColumnsToContents()
-        self.ui.businessTable.setColumnWidth(id_address, min(200,int(self.ui.businessTable.columnWidth(id_address) * 0.9)))
-        self.ui.businessTable.setColumnWidth(id_name, min(200,int(self.ui.businessTable.columnWidth(id_address) * 0.9)))
-        self.ui.businessTable.hideColumn(id_col) # hide b_id, we need to keep b_id to get the selected business
-        self.ui.businessTable.setSelectionBehavior(QAbstractItemView.SelectRows) # select whole rows
-        self.ui.businessTable.setSelectionMode(QAbstractItemView.SingleSelection) # one row at a time
-        self.ui.businessTable.setEditTriggers(QAbstractItemView.NoEditTriggers) # make the table read-only
+        self.ui.businessTable.setColumnWidth(id_address,
+                                             min(200, int(self.ui.businessTable.columnWidth(id_address) * 0.9)))
+        self.ui.businessTable.setColumnWidth(id_name, min(200, int(self.ui.businessTable.columnWidth(id_name) * 0.9)))
+        self.ui.businessTable.hideColumn(id_col)  # hide b_id
+        self.ui.businessTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.businessTable.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.businessTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.ui.businessTable.horizontalHeader().setStretchLastSection(True)
 
-    # -----------------------------------------------------------
-    # Handlers for business details
+    # Handler for business details
     def on_business_double_clicked(self, index):
         row = index.row()
         model = self.ui.businessTable.model()
-        business_id = model.index(row, self.headers.index("business_id")).data()
-        # load business details in the business details dialog and show it modally
-        self.business_window.load(business_id) # load business details using the business_id
-        self.business_window.exec() # show modally
+        business_id = model.index(row, self.headers.index('b_id')).data()
+        # update businesses id in business fields
+        self.business_window.load(business_id)
+        self.business_window.exec()

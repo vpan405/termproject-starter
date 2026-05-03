@@ -32,7 +32,6 @@ public class YelpRepository {
 
     private Connection connection;
 
-    // returns business state
     public List<String> getStateData() {
         List<String> states = new ArrayList<>();
         logger.info("getStates called in initialize.");
@@ -40,22 +39,24 @@ public class YelpRepository {
             SELECT DISTINCT state
             FROM business
             ORDER BY state
-        """;
+         """;
+
         try {
             connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
         try (PreparedStatement ps = connection.prepareStatement(stateQuery)) {
-            logger.info("Executing query:" + stateQuery);
+            logger.info("Executing query: " + stateQuery);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 states.add(rs.getString("state"));
             }
         } catch (SQLException ex) {
-            logger.severe("Error executing query:" + ex.getMessage());
+            logger.severe("Error executing query: " + ex.getMessage());
             ex.printStackTrace();
         }
+
         try {
             connection.close();
         } catch (SQLException ex) {
@@ -64,72 +65,197 @@ public class YelpRepository {
         return states;
     }
 
-    // returns business categories based on its state
-    public List<String> getCategories(String state) {
-        List<String> categories = new ArrayList<>();
-        logger.info("getCategoriesForCity called in initialize.");
+    public List<String> getCities(String state) {
+        List<String> cities = new ArrayList<>();
+        logger.info("getCategories called in initialize.");
         if (state == null) {
-            return categories;
+            return cities;
         }
-        String categoryQuery = """
-            SELECT DISTINCT BelongsTo.cat_name
-            FROM BelongsTo
-            JOIN business ON BelongsTo.b_id = business.b_id
-            WHERE business.state = ?
-            ORDER BY BelongsTo.cat_name
+        String cityQuery = """
+                SELECT DISTINCT b.city FROM business b
+                WHERE b.state = ?
+                ORDER BY b.city
         """;
+        //establish connection
         try {
             connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
-        try (PreparedStatement ps = connection.prepareStatement(categoryQuery)) {
-            logger.info("Executing query:" + categoryQuery);
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(cityQuery)) {
+            logger.info("Executing query: " + cityQuery);
             ps.setString(1, state);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                cities.add(rs.getString("city"));
+            }
+        } catch (SQLException ex) {
+            logger.severe("Error executing query: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        //close connection
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return cities;
+    }
+
+    public List<String> getCategories(String state, String city) {
+        List<String> categories = new ArrayList<>();
+        logger.info("getCategories called in initialize.");
+        if (state == null) {
+            return categories;
+        }
+        String categoryQuery = """
+                SELECT DISTINCT belongsto.cat_name
+                FROM belongsto
+                JOIN business ON business.b_id = belongsto.b_id
+                WHERE business.state= ? AND business.city = ?
+                ORDER BY belongsto.cat_name
+        """;
+        //establish connection
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(categoryQuery)) {
+            logger.info("Executing query: " + categoryQuery);
+            ps.setString(1, state);
+            ps.setString(2, city);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 categories.add(rs.getString("cat_name"));
             }
         } catch (SQLException ex) {
-            logger.severe("Error executing query:" + ex.getMessage());
+            logger.severe("Error executing query: " + ex.getMessage());
             ex.printStackTrace();
         }
+        //close connection
         try {
             connection.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
         return categories;
     }
 
-    // return business attributes
-    public List<Business> queryBusinesses(String state, List<String> categories) {
-        List<Business> res = new ArrayList<>();
-        logger.info("queryBusinesses is called.");
-        String businessQuery = """ 
-            SELECT b_id, name, address, city, state, zip, latitude, longitude, rating, tip_count
-            FROM business
-            WHERE business.state = ?
-        """; // is_open???
-        /*
-        for (String cat: categories){
-            // do something
-         */
+    public List<String> getAttributes(String state, String city) {
+        List<String> attributes = new ArrayList<>();
+        logger.info("getAttributes called in initialize.");
+        if (state == null) {
+            return attributes;
+        }
+        String attributeQuery = """
+                SELECT DISTINCT businessattribute.att_name
+                FROM businessattribute
+                JOIN business ON business.b_id = businessattribute.b_id
+                WHERE business.state = ? AND business.city = ? AND businessattribute.att_value = 'True'
+                ORDER BY businessattribute.att_name
+        """;
+        //establish connection
         try {
             connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
-        try (PreparedStatement ps = connection.prepareStatement(businessQuery)) {
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(attributeQuery)) {
+            logger.info("Executing query: " + attributeQuery);
             ps.setString(1, state);
-            // int count = 2;
-            /*
-            for (String cat: categories){
-                // do something, increment count
-            */
+            ps.setString(2, city);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                attributes.add(rs.getString("att_name"));
+            }
+        } catch (SQLException ex) {
+            logger.severe("Error executing query: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        //close connection
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return attributes;
+    }
+
+    public List<Business> queryBusinesses(String state, String city, List<String> categories) {
+        List<Business> res = new ArrayList<>();
+        logger.info("queryBusinesses is called.");
+        String businessQuery = """
+                    """;
+        if (!categories.isEmpty()) {
+            businessQuery += """
+                SELECT B.b_id, name, address, city, state, zip, rating, tip_count, latitude, longitude
+                              FROM Business B
+                              JOIN BelongsTo C ON C.b_id = B.b_id
+                              WHERE B.state = ?
+                                AND B.city = ?
+                                AND C.cat_name IN (
+                              
+        """;
+        }
+        else {
+            businessQuery += """
+                SELECT B.b_id, name, address, city, state, zip, rating, tip_count, latitude, longitude
+                              FROM Business B
+                              WHERE B.state = ?
+                                AND B.city = ?
+                              
+        """;
+        }
+        //add placeholders for every category in categories
+        for (int i = 0; i < categories.size(); i++) {
+            if (i == categories.size() - 1) {
+                businessQuery += """
+                    ? """;
+            }
+            else {
+                businessQuery += """
+                    ?, """;
+            }
+        }
+
+        //add the end of the query only if categories are selected
+        if (!categories.isEmpty()) {
+            businessQuery += """
+            ) 
+            GROUP BY B.b_id, name, address, city, state, zip, rating, tip_count, latitude, longitude
+            HAVING COUNT(DISTINCT cat_name) = ?
+            """;
+        }
+
+        businessQuery += """
+            ORDER BY name""";
+
+        //establish connection
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(businessQuery)) {
+            logger.info("Executing query: " + businessQuery);
+            ps.setString(1, state);
+            ps.setString(2, city);
+            int index = 3;
+            for (String cat: categories) {
+                ps.setString(index, cat);
+                index++;
+            }
+            if(!categories.isEmpty()) {
+                ps.setInt(index, categories.size());
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    res.add(new Business (
+                    res.add(new Business(
                             rs.getString("b_id"),
                             rs.getString("name"),
                             rs.getString("address"),
@@ -140,39 +266,44 @@ public class YelpRepository {
                             rs.getDouble("longitude"),
                             rs.getFloat("rating"),
                             rs.getInt("tip_count"),
-                            0, // assign rank to 0. rank field is needed for similarity search query result
-                            0.0 // assign distance to 0. distance field is needed for similarity search query result
+                            0,
+                            0.0
                     ));
                 }
             }
         } catch (SQLException ex) {
-            logger.severe("Business search failed!: " + ex.getMessage());
+            logger.severe("business search failed: " + ex.getMessage());
         }
+        //close connection
         try {
             connection.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
         return res;
     }
 
-    public Business getBusinessDetails(String business_id){
+    public Business getBusinessDetails(String business_id) {
         Business res = null;
+
         String businessQuery = """
-            SELECT b_id, name, address, city, state, zip, latitude, longitude, rating, tip_count
-            FROM business
-            WHERE b_id = ?
+                SELECT b_id, name, address, city, state, zip, rating, tip_count, latitude, longitude
+                FROM Business
+                WHERE b_id = ?
         """;
+        //establish connection
         try {
             connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
+        //execute query
         try (PreparedStatement ps = connection.prepareStatement(businessQuery)) {
-            ps.setString(1,business_id);
-            try(ResultSet rs = ps.executeQuery()) {
+            logger.info("Executing query: " + businessQuery);
+            ps.setString(1, business_id);
+            try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    res = new Business (
+                    res = new Business(
                             rs.getString("b_id"),
                             rs.getString("name"),
                             rs.getString("address"),
@@ -183,19 +314,21 @@ public class YelpRepository {
                             rs.getDouble("longitude"),
                             rs.getFloat("rating"),
                             rs.getInt("tip_count"),
-                            0, // assign rank to 0. rank field is needed for similarity search query result
-                            0.0 // assign distance to 0. distance field is needed for similarity search query result
+                            0,
+                            0.0
                     );
                 }
             }
         } catch (SQLException ex) {
-            logger.severe("Business details query failed!: " + ex.getMessage());
+            logger.severe("business search failed: " + ex.getMessage());
         }
+        //close connection
         try {
             connection.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
         return res;
     }
+
 }

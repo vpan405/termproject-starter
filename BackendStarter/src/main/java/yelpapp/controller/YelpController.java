@@ -36,39 +36,74 @@ public class YelpController {
     /*
     http://localhost:3000
     /api/states
-     */
+    Example response: [
+  {
+    "states": [
+      "AZ",
+      "IL",
+      "NC",
+      "NV",
+      "OH",
+      "PA",
+      "SC",
+      "WI"
+    ]
+  }
+]
+    */
     @GetMapping("/states")
     public ResponseEntity<?> getStates() {
         List<String> states;
         try {
             states = yelpRepository.getStateData();
         } catch (Exception ex) {
-            throw new RuntimeException("Could not get the data...", ex);
+            throw new RuntimeException("Could not get the states...", ex);
         }
         return ResponseEntity.ok(List.of(Map.of("states", states)));
     }
 
+    @GetMapping("/cities")
+    public ResponseEntity<?> getCities(@RequestParam String state) {
+        List<String> cities;
+        try {
+            cities = yelpRepository.getCities(state);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not get the cities...", ex);
+        }
+        return ResponseEntity.ok(List.of(Map.of("cities", cities)));
+    }
+
     /*
      http://localhost:3000
-     /api/filters?state=AZ
+     /api/filters?state=value
+     example: [
+  {
+    "categories": [
+      "Acai Bowls",  "Accessories"]}]
      */
     @GetMapping("/filters")
-    public ResponseEntity<?> getFilters(@RequestParam String state) {
+    public ResponseEntity<?> getFilters(@RequestParam String state, @RequestParam String city) {
         List<String> categories;
+        List<String> attributes;
         try {
-            categories = yelpRepository.getCategories(state);
+            categories = yelpRepository.getCategories(state, city);
         } catch (Exception ex) {
-            throw new RuntimeException("Could not get the categories for the state and city", ex);
+            throw new RuntimeException("Could not get the categories for the state and city..", ex);
         }
-        return ResponseEntity.ok(List.of(Map.of("categories", categories)));
+        try {
+            attributes = yelpRepository.getAttributes(state, city);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not get the attributes for the state and city..", ex);
+        }
+        return ResponseEntity.ok(List.of(Map.of("categories", categories), Map.of("attributes", attributes)));
     }
 
     /*
     http://localhost:3000
     /api/businesses
     {
-        "key": "value",
-        "optionalkeys": ["value1", "value2"]
+	"state": "NC",
+    "categories": ["Restaurants", "Food"]
     }
   */
     @RequestMapping(value = "/businesses", method = {RequestMethod.GET, RequestMethod.POST})
@@ -77,22 +112,25 @@ public class YelpController {
         List<Business> businesses;
         List<String> categories;
         String state;
+        String city;
 
 
         // Validate and parse required fields from the request body
         try {
             state = body.get("state").toString();
+            city = body.get("city").toString();
         } catch (Exception ex) {
             return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Required fields: state.", // include city too
+                    "error", "Required fields: state, city",
                     "details", ex.getMessage()
             ));
         }
+
         // get the optional fields if they exist
         categories = (List<String>) body.get("categories");
 
         try {
-            businesses = yelpRepository.queryBusinesses(state, categories);
+            businesses = yelpRepository.queryBusinesses(state, city, categories);
         } catch (Exception ex) {
             throw new RuntimeException("Search failed...", ex);
         }
@@ -102,14 +140,19 @@ public class YelpController {
     /*
     http://localhost:3000
     /api/businesses/{bid}
-     */
+    {
+	"state": "NC",
+    "categories": ["Restaurants", "Food"]
+    }
+  */
     @GetMapping("/businesses/{bid}")
-    public ResponseEntity<?> getBusinessDetails(@PathVariable String bid){
+    public ResponseEntity<?> getBusinessDetails(@PathVariable String bid) {
         Business businessDetails;
+
         try {
             businessDetails = yelpRepository.getBusinessDetails(bid);
         } catch (Exception ex) {
-            throw new RuntimeException("Count not find the business for the given business id", ex);
+            throw new RuntimeException("Could not find the business for given business id ... ", ex);
         }
         return ResponseEntity.ok(List.of(Map.of("business", businessDetails)));
     }

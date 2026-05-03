@@ -15,9 +15,9 @@ from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QFile
 from PySide6.QtUiTools import QUiLoader
 
-
 from app.config import SUB_WINDOW_HEIGHT, SUB_WINDOW_WIDTH
 from app.apiservices.request_controller import RequestController
+
 
 class BusinessDetails(QDialog):
     def __init__(self, api_client, parent=None):
@@ -26,7 +26,7 @@ class BusinessDetails(QDialog):
         self.request_controller = RequestController(api_client=self.api_client, parent=self)
         self.setWindowTitle("Business Details")
         self.resize(SUB_WINDOW_WIDTH, SUB_WINDOW_HEIGHT)
-                
+
         loader = QUiLoader()
         ui_file = QFile(os.path.join(os.path.dirname(__file__), "BusinessDetails.ui"))
         ui_file.open(QFile.ReadOnly)
@@ -41,23 +41,23 @@ class BusinessDetails(QDialog):
     # Override exec to show the dialog
     def exec(self):
         return self.ui.exec()
-    
+
     def on_close_clicked(self):
         self.ui.close()
 
     def load(self, business_id):
-        self.request_controller.send("GET", f"/api/businesses/{business_id}", self.on_business_fetched, self.on_business_error, None, self.set_status_message)
+        self.request_controller.send("GET", f"api/businesses/{business_id}", self.on_business_fetched,
+                                     self.on_business_error, None, self.set_status_message)
 
     def on_business_fetched(self, status_code, body):
         """Handle successful business details response"""
         results = json.loads(body)[0]
         business = results.get("business", {})
-        print(f"Business details fetched successfully: {business}")
-        self.ui.businessName.setText(business.get("business_name",""))
+        self.ui.businessName.setText(business.get("name", ""))
 
     def on_business_error(self, error_message):
-        """Handle error in fetching business details"""
-        self.parent().show_error(f"Failed to load business details: {error_message}")
+        """Handles error in fetching business details"""
+        self.parent.show_error(f"Failed to load business details: {error_message}")
 
     # -----------------------------------------------------------
     # HELPER METHODS    
