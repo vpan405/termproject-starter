@@ -77,8 +77,8 @@ class YelpApp(QMainWindow):
         self.ui.businessTable.doubleClicked.connect(self.on_business_double_clicked)
 
         # wifi and price range start out empty
-        #self.ui.wifiList.addItem("")
-        #self.ui.prList.addItem("")
+        self.ui.wifiList.addItem("")
+        self.ui.prList.addItem("")
 
     # -----------------------------------------------------------
     # HELPER METHODS
@@ -135,13 +135,13 @@ class YelpApp(QMainWindow):
 
             # populate wifi listview
             self.ui.wifiList.clear()
-            #self.ui.wifiList.addItem("")
+            self.ui.wifiList.addItem("")
             for i in wifi_values:
                 self.ui.wifiList.addItem(i)
 
             # populate price range
             self.ui.prList.clear()
-            #self.ui.prList.addItems("")
+            self.ui.prList.addItem("")
             for i in price_values:
                 self.ui.prList.addItem(i)
 
