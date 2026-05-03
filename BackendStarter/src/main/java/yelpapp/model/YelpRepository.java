@@ -185,73 +185,105 @@ public class YelpRepository {
         return attributes;
     }
 
-    public List<Business> queryBusinesses(String state, String city, List<String> categories) {
+    public List<Business> queryBusinesses(String state, String city, List<String> categories, List<String> attributes) {
         List<Business> res = new ArrayList<>();
         logger.info("queryBusinesses is called.");
-        String businessQuery = """
-                    """;
-        if (!categories.isEmpty()) {
-            businessQuery += """
-                SELECT B.b_id, name, address, city, state, zip, rating, tip_count, latitude, longitude
-                              FROM Business B
-                              JOIN BelongsTo C ON C.b_id = B.b_id
-                              WHERE B.state = ?
-                                AND B.city = ?
-                                AND C.cat_name IN (
-                              
-        """;
-        }
-        else {
-            businessQuery += """
-                SELECT B.b_id, name, address, city, state, zip, rating, tip_count, latitude, longitude
-                              FROM Business B
-                              WHERE B.state = ?
-                                AND B.city = ?
-                              
-        """;
-        }
-        //add placeholders for every category in categories
-        for (int i = 0; i < categories.size(); i++) {
-            if (i == categories.size() - 1) {
-                businessQuery += """
-                    ? """;
-            }
-            else {
-                businessQuery += """
-                    ?, """;
-            }
-        }
 
-        //add the end of the query only if categories are selected
-        if (!categories.isEmpty()) {
+        boolean hasCategories = categories != null && !categories.isEmpty();
+        boolean hasAttributes = attributes != null && !attributes.isEmpty();
+
+        String businessQuery = """
+                SELECT B.b_id, B.name, B.address, B.city, B.state, B.zip,
+                       B.rating, B.tip_count, B.latitude, B.longitude
+                FROM Business B
+                """;
+
+        if (hasCategories) {
             businessQuery += """
-            ) 
-            GROUP BY B.b_id, name, address, city, state, zip, rating, tip_count, latitude, longitude
-            HAVING COUNT(DISTINCT cat_name) = ?
-            """;
+                    JOIN BelongsTo C ON C.b_id = B.b_id
+                    """;
+        }
+        if (hasAttributes) {
+            businessQuery += """
+                    JOIN BusinessAttribute A ON A.b_id = B.b_id
+                    """;
         }
 
         businessQuery += """
-            ORDER BY name""";
+                WHERE B.state = ? AND B.city = ?
+                """;
 
-        //establish connection
+        if (hasCategories) {
+            //add placeholders for every category in categories
+            businessQuery += "AND C.cat_name IN (";
+            for (int i = 0; i < categories.size(); i++) {
+                if (i < categories.size() - 1) {
+                    businessQuery += "?, ";
+                } else {
+                    businessQuery += "?";
+                }
+            }
+            businessQuery += """
+                    )
+                    """;
+        }
+
+        if (hasAttributes) {
+            //add placeholders for every attribute in attributes
+            businessQuery += "AND A.att_name IN (";
+            for (int i = 0; i < attributes.size(); i++) {
+                if (i < attributes.size() - 1) {
+                    businessQuery += "?, ";
+                } else {
+                    businessQuery += "?";
+                }
+            }
+            businessQuery += """
+                    ) AND A.att_value = 'True'
+                    """;
+        }
+
+        if (hasCategories || hasAttributes) {
+            businessQuery += """
+                    GROUP BY B.b_id, B.name, B.address, B.city, B.state, B.zip,
+                             B.rating, B.tip_count, B.latitude, B.longitude
+                    """;
+
+            //add the end of the query only if categories or attributes or both are selected
+            businessQuery += "HAVING ";
+            if (hasCategories) {
+                businessQuery += "COUNT(DISTINCT C.cat_name) = " + categories.size();
+            }
+            if (hasCategories && hasAttributes) {
+                businessQuery += " AND ";
+            }
+            if (hasAttributes) {
+                businessQuery += "COUNT(DISTINCT A.att_name) = " + attributes.size();
+            }
+            businessQuery += "\n";
+        }
+
+        businessQuery += """
+                ORDER BY B.name
+                """;
+
+        // establish connection
         try {
             connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+            logger.info("Executing query: " + businessQuery);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
-        //execute query
         try (PreparedStatement ps = connection.prepareStatement(businessQuery)) {
-            logger.info("Executing query: " + businessQuery);
-            ps.setString(1, state);
-            ps.setString(2, city);
-            int index = 3;
-            for (String cat: categories) {
-                ps.setString(index, cat);
-                index++;
+            int idx = 1;
+            ps.setString(idx++, state);
+            ps.setString(idx++, city);
+
+            for (String cat : categories) {
+                ps.setString(idx++, cat);
             }
-            if(!categories.isEmpty()) {
-                ps.setInt(index, categories.size());
+            for (String att : attributes) {
+                ps.setString(idx++, att);
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

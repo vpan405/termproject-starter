@@ -152,10 +152,12 @@ class YelpApp(QMainWindow):
     # searching the businesses
     def on_search_clicked(self):
         selected_categories = [cat.data() for cat in self.ui.categoryList.selectedIndexes()]
+        selected_attributes = [attr.data() for attr in self.ui.attributeList.selectedIndexes()]
         search_body = {
             "state": self.ui.statesList.currentText(),
             "city": self.ui.citiesList.currentText(),
-            "categories": selected_categories
+            "categories": selected_categories,
+            "attributes": selected_attributes
         }
         print(f"Search POST request body: {search_body}")
         self.request_controller.send("POST", "/api/businesses", self.on_search_results, self.on_search_error,
