@@ -85,6 +85,8 @@ public class YelpController {
     public ResponseEntity<?> getFilters(@RequestParam String state, @RequestParam String city) {
         List<String> categories;
         List<String> attributes;
+        List<String> wifiValues;
+        List<String> priceRangeValues;
         try {
             categories = yelpRepository.getCategories(state, city);
         } catch (Exception ex) {
@@ -95,7 +97,17 @@ public class YelpController {
         } catch (Exception ex) {
             throw new RuntimeException("Could not get the attributes for the state and city..", ex);
         }
-        return ResponseEntity.ok(List.of(Map.of("categories", categories), Map.of("attributes", attributes)));
+        try {
+            wifiValues = yelpRepository.getWifiValues(state, city);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not get the WiFi values for the state and city..", ex);
+        }
+        try {
+            priceRangeValues = yelpRepository.getPriceRangeValues(state, city);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not get the price range values for the state and city..", ex);
+        }
+        return ResponseEntity.ok(List.of(Map.of("categories", categories), Map.of("attributes", attributes), Map.of("wifi_values", wifiValues), Map.of("price_range_values", priceRangeValues)));
     }
 
     /*

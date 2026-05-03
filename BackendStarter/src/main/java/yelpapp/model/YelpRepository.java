@@ -185,6 +185,92 @@ public class YelpRepository {
         return attributes;
     }
 
+    public List<String> getWifiValues(String state, String city) {
+        List<String> wifiValues = new ArrayList<>();
+        logger.info("getWifiValues called.");
+        if (state == null || city == null) {
+            return wifiValues;
+        }
+        String wifiQuery = """
+                SELECT DISTINCT A.att_value
+                FROM BusinessAttribute A
+                JOIN Business B ON B.b_id = A.b_id
+                WHERE B.state = ? AND B.city = ?
+                  AND A.att_name = 'WiFi'
+                  AND A.att_value IS NOT NULL
+                ORDER BY A.att_value
+                """;
+        //establish connection
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(wifiQuery)) {
+            logger.info("Executing query: " + wifiQuery);
+            ps.setString(1, state);
+            ps.setString(2, city);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                wifiValues.add(rs.getString("att_value"));
+            }
+        } catch (SQLException ex) {
+            logger.severe("Error executing getWifiValues: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        //close connection
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return wifiValues;
+    }
+
+    public List<String> getPriceRangeValues(String state, String city) {
+        List<String> priceValues = new ArrayList<>();
+        logger.info("getPriceRangeValues called.");
+        if (state == null || city == null) {
+            return priceValues;
+        }
+        String priceQuery = """
+                SELECT DISTINCT A.att_value
+                FROM BusinessAttribute A
+                JOIN Business B ON B.b_id = A.b_id
+                WHERE B.state = ? AND B.city = ?
+                  AND A.att_name = 'RestaurantsPriceRange2'
+                  AND A.att_value IS NOT NULL
+                ORDER BY A.att_value
+                """;
+        //establish connection
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(priceQuery)) {
+            logger.info("Executing query: " + priceQuery);
+            ps.setString(1, state);
+            ps.setString(2, city);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                priceValues.add(rs.getString("att_value"));
+            }
+        } catch (SQLException ex) {
+            logger.severe("Error executing getPriceRangeValues: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        //close connection
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return priceValues;
+    }
+
     public List<Business> queryBusinesses(String state, String city, List<String> categories, List<String> attributes) {
         List<Business> res = new ArrayList<>();
         logger.info("queryBusinesses is called.");

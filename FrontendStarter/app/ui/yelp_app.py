@@ -76,6 +76,10 @@ class YelpApp(QMainWindow):
         self.business_window = BusinessDetails(self.api_client, parent=self)
         self.ui.businessTable.doubleClicked.connect(self.on_business_double_clicked)
 
+        # wifi and price range start out empty
+        #self.ui.wifiList.addItem("")
+        #self.ui.prList.addItem("")
+
     # -----------------------------------------------------------
     # HELPER METHODS
     def set_status_message(self, message):
@@ -125,6 +129,22 @@ class YelpApp(QMainWindow):
             # populate cateogry listview
             self.category_model.setStringList(filters[0]['categories'])
             self.attribute_model.setStringList(filters[1]['attributes'])
+            # get wifi and price range values
+            wifi_values = filters[2].get('wifi_values', [])
+            price_values = filters[3].get('price_range_values',[])
+
+            # populate wifi listview
+            self.ui.wifiList.clear()
+            #self.ui.wifiList.addItem("")
+            for i in wifi_values:
+                self.ui.wifiList.addItem(i)
+
+            # populate price range
+            self.ui.prList.clear()
+            #self.ui.prList.addItems("")
+            for i in price_values:
+                self.ui.prList.addItem(i)
+
             # print(f"Categories loaded : {filters[0]['categories']}")
             self.set_status_message("Categories and attributes loaded successfully.")
         except json.JSONDecodeError:
@@ -153,6 +173,16 @@ class YelpApp(QMainWindow):
     def on_search_clicked(self):
         selected_categories = [cat.data() for cat in self.ui.categoryList.selectedIndexes()]
         selected_attributes = [attr.data() for attr in self.ui.attributeList.selectedIndexes()]
+
+        # only include wifi and price range if attribute filters is not empty
+        attribute_filters = {}
+        wifi_value = self.ui.wifiList.currentText()
+        if wifi_value:
+            attribute_filters['Wifi'] = wifi_value
+        price_value = self.ui.prList.currentText()
+        if price_value:
+            attribute_filters['RestaurantsPriceRange2'] = price_value
+
         search_body = {
             "state": self.ui.statesList.currentText(),
             "city": self.ui.citiesList.currentText(),
