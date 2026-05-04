@@ -271,12 +271,14 @@ public class YelpRepository {
         return priceValues;
     }
 
-    public List<Business> queryBusinesses(String state, String city, List<String> categories, List<String> attributes) {
+    public List<Business> queryBusinesses(String state, String city, List<String> categories, List<String> attributes, String wifi, String priceRange) {
         List<Business> res = new ArrayList<>();
         logger.info("queryBusinesses is called.");
 
         boolean hasCategories = categories != null && !categories.isEmpty();
         boolean hasAttributes = attributes != null && !attributes.isEmpty();
+        boolean hasWifi = wifi != null && !wifi.isBlank();
+        boolean hasPriceRange = priceRange != null && !priceRange.isBlank();
 
         String businessQuery = """
                 SELECT B.b_id, B.name, B.address, B.city, B.state, B.zip,
@@ -292,6 +294,20 @@ public class YelpRepository {
         if (hasAttributes) {
             businessQuery += """
                     JOIN BusinessAttribute A ON A.b_id = B.b_id
+                    """;
+        }
+        if (hasWifi) {
+            businessQuery += """
+                    JOIN BusinessAttribute W ON W.b_id = B.b_id
+                    AND W.att_name = 'WiFi'
+                    AND W.att_value = ?
+                    """;
+        }
+        if (hasPriceRange) {
+            businessQuery += """
+                    JOIN BusinessAttribute P ON P.b_id = B.b_id
+                    AND P.att_name = 'RestaurantsPriceRange2'
+                    AND P.att_value = ?
                     """;
         }
 
@@ -362,6 +378,12 @@ public class YelpRepository {
         }
         try (PreparedStatement ps = connection.prepareStatement(businessQuery)) {
             int idx = 1;
+            if(hasWifi) {
+                ps.setString(idx++, wifi);
+            }
+            if(hasPriceRange) {
+                ps.setString(idx++, priceRange);
+            }
             ps.setString(idx++, state);
             ps.setString(idx++, city);
 

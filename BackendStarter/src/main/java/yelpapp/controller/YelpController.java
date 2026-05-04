@@ -141,9 +141,11 @@ public class YelpController {
         // get the optional fields if they exist
         categories = body.get("categories") != null ? (List<String>) body.get("categories") : new ArrayList<>();
         List<String> attributes = body.get("attributes") != null ? (List<String>) body.get("attributes") : new ArrayList<>();
+        String wifi = body.get("wifi") != null ? body.get("wifi").toString() : null;
+        String priceRange = body.get("price_range") != null ? body.get("price_range").toString() : null;
 
         try {
-            businesses = yelpRepository.queryBusinesses(state, city, categories, attributes);
+            businesses = yelpRepository.queryBusinesses(state, city, categories, attributes, wifi, priceRange);
         } catch (Exception ex) {
             throw new RuntimeException("Search failed...", ex);
         }

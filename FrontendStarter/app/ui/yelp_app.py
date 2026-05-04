@@ -173,21 +173,25 @@ class YelpApp(QMainWindow):
     def on_search_clicked(self):
         selected_categories = [cat.data() for cat in self.ui.categoryList.selectedIndexes()]
         selected_attributes = [attr.data() for attr in self.ui.attributeList.selectedIndexes()]
+        wifi_value = self.ui.wifiList.currentText() or None
+        price_value = self.ui.prList.currentText() or None
 
         # only include wifi and price range if attribute filters is not empty
-        attribute_filters = {}
-        wifi_value = self.ui.wifiList.currentText()
-        if wifi_value:
-            attribute_filters['Wifi'] = wifi_value
-        price_value = self.ui.prList.currentText()
-        if price_value:
-            attribute_filters['RestaurantsPriceRange2'] = price_value
+        #attribute_filters = {}
+        #wifi_value = self.ui.wifiList.currentText()
+        #if wifi_value:
+        #    attribute_filters['Wifi'] = wifi_value
+        #price_value = self.ui.prList.currentText()
+        #if price_value:
+        #    attribute_filters['RestaurantsPriceRange2'] = price_value
 
         search_body = {
             "state": self.ui.statesList.currentText(),
             "city": self.ui.citiesList.currentText(),
             "categories": selected_categories,
-            "attributes": selected_attributes
+            "attributes": selected_attributes,
+            "wifi": wifi_value,
+            "price_range": price_value,
         }
         print(f"Search POST request body: {search_body}")
         self.request_controller.send("POST", "/api/businesses", self.on_search_results, self.on_search_error,
