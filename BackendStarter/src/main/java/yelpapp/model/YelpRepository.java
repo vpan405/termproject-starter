@@ -470,5 +470,120 @@ public class YelpRepository {
         }
         return res;
     }
+    public List<String> getBusinessHours(String business_id, String day_of_week) {
+        List<String> res = new ArrayList<>();
+        res.add(day_of_week);
+
+        String businessQuery = """
+                SELECT h.weekday, h.open_time, h.close_time
+                FROM Business b
+                    JOIN Hours h ON b.b_id = h.b_id
+                WHERE b.b_id = ?
+                AND h.weekday = ?;
+        """;
+        //establish connection
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(businessQuery)) {
+            logger.info("Executing query: " + businessQuery);
+            ps.setString(1, business_id);
+            ps.setString(2, day_of_week);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    res.add(rs.getString("open_time"));
+                    res.add(rs.getString("close_time"));
+                }
+            }
+        } catch (SQLException ex) {
+            logger.severe("business hours search failed: " + ex.getMessage());
+        }
+        //close connection
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return res;
+    }
+
+    public List<String> getBusinessCategories(String business_id) {
+        List<String> res = new ArrayList<>();
+
+        String businessQuery = """
+                SELECT bt.cat_name
+                FROM Business b
+                    JOIN BelongsTo bt ON b.b_id = bt.b_id
+                WHERE b.b_id = ?
+                GROUP BY b.b_id, bt.cat_name
+                ORDER BY bt.cat_name;
+        """;
+        //establish connection
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(businessQuery)) {
+            logger.info("Executing query: " + businessQuery);
+            ps.setString(1, business_id);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    res.add(rs.getString("cat_name"));
+                }
+            }
+        } catch (SQLException ex) {
+            logger.severe("business category search failed: " + ex.getMessage());
+        }
+        //close connection
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return res;
+    }
+
+    public List<String> getBusinessAttributes(String business_id) {
+        List<String> res = new ArrayList<>();
+
+        String businessQuery = """
+                SELECT ba.att_name, ba.att_value
+                FROM Business b
+                    JOIN BusinessAttribute ba ON b.b_id = ba.b_id
+                WHERE b.b_id = ?
+                GROUP BY b.b_id, ba.att_name, ba.att_value
+                ORDER BY ba.att_name;
+        """;
+        //establish connection
+        try {
+            connection = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASS);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        //execute query
+        try (PreparedStatement ps = connection.prepareStatement(businessQuery)) {
+            logger.info("Executing query: " + businessQuery);
+            ps.setString(1, business_id);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    res.add(rs.getString("att_name") + " (" + rs.getString("att_value") + ")");
+                }
+            }
+        } catch (SQLException ex) {
+            logger.severe("business attribute search failed: " + ex.getMessage());
+        }
+        //close connection
+        try {
+            connection.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return res;
+    }
 
 }

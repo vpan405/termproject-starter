@@ -12,7 +12,7 @@
 import os
 import json
 from PySide6.QtWidgets import QDialog
-from PySide6.QtCore import QFile
+from PySide6.QtCore import QFile, QStringListModel
 from PySide6.QtUiTools import QUiLoader
 
 from app.config import SUB_WINDOW_HEIGHT, SUB_WINDOW_WIDTH
@@ -35,6 +35,11 @@ class BusinessDetails(QDialog):
 
         self.ui.setModal(True)
 
+        self.category_model = QStringListModel()
+        self.ui.categoryList.setModel(self.category_model)
+        self.attribute_model = QStringListModel()
+        self.ui.attributeList.setModel(self.attribute_model)
+
         # Connect signals to handlers
         self.ui.closeButton.clicked.connect(self.on_close_clicked)
 
@@ -54,6 +59,26 @@ class BusinessDetails(QDialog):
         results = json.loads(body)[0]
         business = results.get("business", {})
         self.ui.businessName.setText(business.get("name", ""))
+
+        address = business.get("address", "") + "\n" + business.get("city", "") + ", " + business.get("state",
+                                                                                                      "") + " " + business.get(
+            "zip", "")
+        self.ui.addressLabel.setText(address)
+
+        hours = results.get("hours", {})
+        self.ui.hoursTitle.setText("Today's Hours: " + hours[0])
+        if len(hours) == 3:
+            self.ui.hoursInfo.setText("Opens: " + hours[1] + "\nCloses: " + hours[2])
+        else:
+            self.ui.hoursInfo.setText("Not Open Today")
+
+        categories = results.get("categories", {})
+        self.category_model.setStringList(categories)
+
+        attributes = results.get("attributes", {})
+        self.attribute_model.setStringList(attributes)
+
+        self.ui.statusMsg.setText("Ready...")
 
     def on_business_error(self, error_message):
         """Handles error in fetching business details"""

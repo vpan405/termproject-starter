@@ -19,7 +19,7 @@ import yelpapp.model.YelpRepository;
 
 import java.util.*;
 import java.util.List;
-
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api")
@@ -163,12 +163,32 @@ public class YelpController {
     @GetMapping("/businesses/{bid}")
     public ResponseEntity<?> getBusinessDetails(@PathVariable String bid) {
         Business businessDetails;
+        List<String> businessHours;
+        List<String> businessCategories;
+        List<String> businessAttributes;
+        String today = LocalDate.now().getDayOfWeek().name();
 
         try {
             businessDetails = yelpRepository.getBusinessDetails(bid);
         } catch (Exception ex) {
             throw new RuntimeException("Could not find the business for given business id ... ", ex);
         }
-        return ResponseEntity.ok(List.of(Map.of("business", businessDetails)));
+        try {
+            businessHours = yelpRepository.getBusinessHours(bid, today);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not find the hours for given business id ... ", ex);
+        }
+        try {
+            businessCategories = yelpRepository.getBusinessCategories(bid);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not find the categories for given business id ... ", ex);
+        }
+        try {
+            businessAttributes = yelpRepository.getBusinessAttributes(bid);
+        } catch (Exception ex) {
+            throw new RuntimeException("Could not find the business for given business id ... ", ex);
+        }
+
+        return ResponseEntity.ok(List.of(Map.of("business", businessDetails, "hours", businessHours, "categories", businessCategories, "attributes", businessAttributes)));
     }
 }
